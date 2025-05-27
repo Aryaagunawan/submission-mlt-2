@@ -8,7 +8,7 @@ Masalah ini penting untuk diselesaikan karena dalam industri musik digital, mema
 
 Sistem rekomendasi berperan dalam meningkatkan pengalaman pengguna dengan memanfaatkan data seperti preferensi lagu, riwayat pemutaran, dan konten lagu itu sendiri. Salah satu metode yang diterapkan adalah Content-based Filtering, yaitu merekomendasikan lagu berdasarkan kesamaan fitur musik—seperti tempo, energy, dan danceability—serta aspek teks dari judul lagu. Dalam prosesnya, TF-IDF (Term Frequency-Inverse Document Frequency) digunakan untuk memberikan bobot pada setiap kata dalam judul lagu, sementara Cosine Similarity dipakai untuk mengukur tingkat kemiripan antar lagu berdasarkan fitur musik dan judul tersebut.
 
-Pendekatan ini memungkinkan sistem untuk menyajikan 12 lagu rekomendasi teratas yang sesuai dengan preferensi pengguna. Hasil evaluasi menunjukkan bahwa sistem memiliki performa yang baik dengan akurasi tinggi, menandakan bahwa rekomendasi yang diberikan relevan berdasarkan analisis kesamaan konten lagu.
+Pendekatan ini memungkinkan sistem untuk menyajikan 10 lagu rekomendasi teratas yang sesuai dengan preferensi pengguna. Hasil evaluasi menunjukkan bahwa sistem memiliki performa yang baik dengan akurasi tinggi, menandakan bahwa rekomendasi yang diberikan relevan berdasarkan analisis kesamaan konten lagu.
 
 
 
