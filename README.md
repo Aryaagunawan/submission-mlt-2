@@ -36,6 +36,7 @@ Menjelaskan tujuan proyek yang menjawab pernyataan masalah:
 ### Solution statements
 - Menggunakan Content-Based Filtering untuk menganalisis fitur lagu.
 - Menerapkan TF-IDF pada judul lagu dan menghitung kemiripan dengan Cosine Similarity.
+- Collaborative Filtering bisa digunakan jika data histori pemutaran tersedia, atau hybrid approach yang menggabungkan histori dengan konten musik untuk rekomendasi yang lebih akurat.
 
 ## Data Understanding
 
