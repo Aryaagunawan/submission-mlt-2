@@ -110,18 +110,120 @@ Korelasi fitur track_popularity sangat lemah dengan semua fitur lain. Energy dan
 
 
 ## Data Preparation
-Pada bagian ini Anda menerapkan dan menyebutkan teknik data preparation yang dilakukan. Teknik yang digunakan pada notebook dan laporan harus berurutan.
+Tahap Data Preparation dilakukan untuk memastikan data yang digunakan bersih, konsisten, dan siap digunakan dalam proses analisis serta pemodelan machine learning. Berikut adalah tahapan yang dilakukan secara berurutan:
 
-**Rubrik/Kriteria Tambahan (Opsional)**: 
-- Menjelaskan proses data preparation yang dilakukan
-- Menjelaskan alasan mengapa diperlukan tahapan data preparation tersebut.
+1. Menghapus Data Kosong (Missing Values)
+   Beberapa baris dalam dataset memiliki nilai kosong (NaN) yang berpotensi mengganggu proses analisis dan pelatihan model. Oleh karena itu, seluruh baris yang memiliki nilai kosong dihapus menggunakan fungsi dropna().
+```python
+df_song.dropna(inplace=True)
+```
+  Alasannya Menghapus data kosong mencegah error dalam perhitungan dan menjaga integritas data.
+  
+2. Menghapus Data Duplikat
+   Beberapa entri dalam dataset memiliki ID lagu (track_id) yang sama, yang berarti terjadi duplikasi data. Untuk menghindari redundansi dan bias pada model, data duplikat dihapus berdasarkan kolom track_id.
+```python
+df_song = df_song.drop_duplicates(subset='track_id').reset_index(drop=True)
+```
+   Hasil: Jumlah data setelah proses pembersihan adalah 28.352 baris dan 23 kolom.
+
+3. Menampilkan Genre dan Subgenre
+   Proses ini bertujuan untuk memahami distribusi genre dan subgenre yang tersedia dalam dataset.
+```python
+for genre in df_song['playlist_genre'].unique():
+    subgenres = df_song['playlist_subgenre'][df_song['playlist_genre'] == genre].unique().tolist()
+    print(f"{genre}: {subgenres}")
+```
+   Insight: Dataset memiliki genre utama seperti pop, rap, rock, latin, r&b, dan edm, masing-masing dengan subgenre yang cukup beragam.
+
+4. Menentukan Album Paling Populer per Artis
+   Langkah ini bertujuan mengevaluasi album mana yang paling populer untuk setiap artis, dengan menghitung rata-rata popularitas lagu dalam album.
+```python
+# Mengelompokkan data berdasarkan artis dan album, lalu menghitung rata-rata popularitas lagu per album
+album_popularity = df_song.groupby(
+    ['track_artist', 'track_album_id', 'track_album_name'],
+    as_index=False
+)['track_popularity'].mean()
+
+# Mengurutkan album dari yang paling populer ke yang kurang populer untuk setiap artis
+top_albums = album_popularity.sort_values(
+    ['track_artist', 'track_popularity'],
+    ascending=[True, False]
+)
+
+# Mengambil satu album teratas (paling populer) dari setiap artis
+top_album_per_artist = top_albums.drop_duplicates('track_artist', keep='first')
+
+# Menampilkan 10 album teratas dari hasil tersebut
+print(top_album_per_artist.head(10))
+```
+   Insight: Diperoleh daftar album paling populer dari setiap artis, yang dapat digunakan untuk analisis lebih lanjut seperti rekomendasi atau pengelompokan.
+
+5. Menyiapkan Fitur Numerik untuk Model
+   Beberapa fitur numerik dipilih dari dataset untuk dianalisis dan digunakan dalam model. Duplikasi berdasarkan track_name juga dihapus untuk menjaga keunikan tiap lagu.
+```python
+# Fungsi untuk mengekstrak fitur numerik dari lagu untuk keperluan analisis
+def prepare_features(df, text_col='track_name', drop_dupes=True):
+    # Daftar fitur numerik yang digunakan
+    selected_features = [
+        'danceability', 'energy', 'loudness',
+        'speechiness', 'acousticness', 'instrumentalness',
+        'liveness', 'valence', 'tempo', 'track_popularity'
+    ]
+
+    # Menyalin kolom fitur dan kolom nama lagu
+    data = df[[*selected_features, text_col]].copy()
+
+    # Opsi: hapus duplikat berdasarkan nama lagu
+    if drop_dupes:
+        data.drop_duplicates(subset=text_col, inplace=True)
+
+    # Mengatur nama lagu sebagai index
+    data.set_index(text_col, inplace=True)
+
+    # Mengembalikan DataFrame fitur dan nama-nama fiturnya
+    return data, selected_features
+
+# Menjalankan fungsi dan menyimpan hasilnya
+temp, features = prepare_features(df_song)
+```
+   Tujuan: Menyiapkan fitur-fitur numerik yang relevan
+
+6. Normalisasi Data Numerik
+   Fitur numerik yang telah dipilih dinormalisasi menggunakan Min-Max Scaling agar berada dalam rentang 0 hingga 1.
+```python
+scaler = MinMaxScaler()
+scaled_numeric = scaler.fit_transform(temp)
+```
 
 ## Modeling
-Tahapan ini membahas mengenai model sisten rekomendasi yang Anda buat untuk menyelesaikan permasalahan. Sajikan top-N recommendation sebagai output.
+Pada tahapan ini, saya membangun sistem rekomendasi lagu berbasis content-based filtering dengan pendekatan kombinasi antara fitur numerik dan representasi teks menggunakan TF-IDF. Sistem rekomendasi ini bertujuan memberikan saran lagu yang mirip dengan lagu yang dipilih pengguna berdasarkan karakteristik akustik dan nama lagu.
 
-**Rubrik/Kriteria Tambahan (Opsional)**: 
-- Menyajikan dua solusi rekomendasi dengan algoritma yang berbeda.
-- Menjelaskan kelebihan dan kekurangan dari solusi/pendekatan yang dipilih.
+1. Representasi Teks Menggunakan TF-IDF
+   Langkah pertama adalah mengubah fitur teks track_name menjadi vektor numerik menggunakan TF-IDF (Term Frequency-Inverse Document Frequency). Teknik ini membantu menangkap kata-kata yang unik dari nama lagu untuk memahami konteksnya secara semantik. Proses dilakukan sebagai berikut:
+```python
+tfidf = TfidfVectorizer(stop_words='english')
+tfidf_matrix = tfidf.fit_transform(temp.index)
+```
+   TF-IDF membantu membedakan lagu yang memiliki nama serupa atau mengandung kata kunci spesifik yang bisa diasosiasikan dengan genre atau tema tertentu.
+
+ 2. Menggabungkan Fitur Numerik dan Teks
+    Setelah mendapatkan representasi teks dan fitur numerik yang sudah dinormalisasi, kedua jenis fitur tersebut digabungkan untuk menghasilkan satu vektor representasi untuk setiap lagu:
+```python
+combined_features = hstack([scaled_numeric, tfidf_matrix])
+```
+   Dengan menggabungkan kedua jenis fitur ini, sistem rekomendasi dapat mempertimbangkan baik karakteristik audio lagu (seperti danceability, tempo, valence) maupun informasi semantik dari nama lagu.
+
+3. Perhitungan Kemiripan antar Lagu
+   Kemiripan antar lagu dihitung menggunakan cosine similarity terhadap matriks gabungan fitur. Semakin tinggi nilai cosine similarity antara dua lagu, semakin besar kemungkinan keduanya mirip:
+```python
+sim_df = pd.DataFrame(
+    cosine_similarity(combined_features),
+    index=temp.index,
+    columns=temp.index
+)
+```
+Hasil dari proses ini adalah matriks kemiripan (similarity matrix) yang dapat digunakan untuk merekomendasikan lagu-lagu yang paling mirip dengan lagu input pengguna.
+
 
 ## Evaluation
 Pada bagian ini Anda perlu menyebutkan metrik evaluasi yang digunakan. Kemudian, jelaskan hasil proyek berdasarkan metrik evaluasi tersebut.
