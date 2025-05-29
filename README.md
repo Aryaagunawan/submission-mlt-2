@@ -90,6 +90,20 @@ Insight:
 
 Sebagian besar lagu sangat tidak populer (skor 0), dengan distribusi lain yang tersebar antara skor 20-80, menunjukkan beberapa puncak popularitas. Sangat sedikit lagu yang mencapai popularitas tinggi.
 
+**Distribusi Popularitas Lagu Berdasarkan Genre**
+```python
+sns.boxplot(x='playlist_genre', y='track_popularity', data=df_song)
+plt.xticks(rotation=45)
+plt.title('Popularitas Lagu berdasarkan Genre')
+plt.show()
+```
+![image](https://github.com/user-attachments/assets/4580dcb8-0b87-4615-a8e0-7f235a8e3440)
+
+
+Insight:
+
+Genre 'pop' memiliki median popularitas tertinggi, sedangkan 'edm' terendah. Semua genre menunjukkan rentang popularitas yang luas, dari sangat rendah hingga sangat tinggi.
+
 
 **Korelasi Antar Fitur Numerik**
 
