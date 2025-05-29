@@ -36,7 +36,6 @@ Menjelaskan tujuan proyek yang menjawab pernyataan masalah:
 ### Solution statements
 - Menggunakan Content-Based Filtering untuk menganalisis fitur lagu.
 - Menerapkan TF-IDF pada judul lagu dan menghitung kemiripan dengan Cosine Similarity.
-- Collaborative Filtering bisa digunakan jika data histori pemutaran tersedia, atau hybrid approach yang menggabungkan histori dengan konten musik untuk rekomendasi yang lebih akurat.
 
 ## Data Understanding
 
@@ -238,17 +237,100 @@ sim_df = pd.DataFrame(
 ```
 Hasil dari proses ini adalah matriks kemiripan (similarity matrix) yang dapat digunakan untuk merekomendasikan lagu-lagu yang paling mirip dengan lagu input pengguna.
 
+Kelebihan:
+
+- Tidak bergantung pada data historis pengguna atau riwayat interaksi.
+- Mampu merekomendasikan lagu baru meskipun belum pernah diputar sebelumnya (mengatasi masalah cold start pada item).
+
+Kekurangan:
+
+- Rekomendasi yang dihasilkan cenderung terbatas pada item yang memiliki kesamaan tekstual, seperti kemiripan pada judul, sehingga kurang beragam.
+- Pendekatan ini tidak secara langsung memperhitungkan preferensi individu pengguna karena hanya berfokus pada atribut dari item itu sendiri.
+
 
 ## Evaluation
-Pada bagian ini Anda perlu menyebutkan metrik evaluasi yang digunakan. Kemudian, jelaskan hasil proyek berdasarkan metrik evaluasi tersebut.
 
-Ingatlah, metrik evaluasi yang digunakan harus sesuai dengan konteks data, problem statement, dan solusi yang diinginkan.
+Pada tahap evaluasi, sistem rekomendasi yang telah dibangun diuji untuk memastikan kemampuannya dalam memberikan rekomendasi yang relevan. Metrik evaluasi yang umumnya digunakan untuk sistem rekomendasi seperti Precision@K, Recall@K, dan F-Score@K, membutuhkan data ground truth (lagu-lagu yang benar-benar relevan bagi pengguna) yang tidak tersedia secara eksplisit dalam dataset ini. Oleh karena itu, evaluasi dilakukan secara kualitatif dengan menguji performa sistem pada contoh lagu dan mengamati relevansi rekomendasi yang dihasilkan.
 
-**Rubrik/Kriteria Tambahan (Opsional)**: 
-- Menjelaskan formula metrik dan bagaimana metrik tersebut bekerja.
+- Precision@K
+  Precision@K mengukur proporsi lagu yang relevan dari K rekomendasi teratas. Fokusnya adalah kualitas rekomendasi yang diberikan.
 
-**---Ini adalah bagian akhir laporan---**
+  Rumus:
 
-_Catatan:_
-- _Anda dapat menambahkan gambar, kode, atau tabel ke dalam laporan jika diperlukan. Temukan caranya pada contoh dokumen markdown di situs editor [Dillinger](https://dillinger.io/), [Github Guides: Mastering markdown](https://guides.github.com/features/mastering-markdown/), atau sumber lain di internet. Semangat!_
-- Jika terdapat penjelasan yang harus menyertakan code snippet, tuliskan dengan sewajarnya. Tidak perlu menuliskan keseluruhan kode project, cukup bagian yang ingin dijelaskan saja.
+![image](https://github.com/user-attachments/assets/4b212313-983b-4dfc-8626-900fa02fb89a)
+
+
+ Maka: Jika Precision@10=0.5, artinya 50% dari 10 lagu teratas yang direkomendasikan adalah relevan bagi pengguna. Semakin tinggi nilainya, semakin sedikit "sampah" dalam rekomendasi.
+
+- Recall@K
+  Mengukur kemampuan sistem rekomendasi untuk mengidentifikasi semua item yang relevan dalam rekomendasi K teratas. Ini berfokus pada kelengkapan sistem, yaitu seberapa banyak item relevan yang berhasil ditemukan oleh sistem.
+
+  Rumus:
+
+![image](https://github.com/user-attachments/assets/d4f980ca-0a26-4d89-9188-adca5eb8c8aa)
+
+
+  Maka: Jika Recall@10=0.714, artinya 71.4% dari semua lagu yang relevan (misalnya ada 7 lagu yang relevan dan sistem berhasil merekomendasikan 5 di antaranya) berhasil masuk dalam 10 rekomendasi teratas. Semakin tinggi nilainya, semakin banyak item relevan yang ditemukan.
+
+
+- F-Score@K
+
+ Merupakan rata-rata harmonik dari Precision@K dan Recall@K. Metrik ini memberikan keseimbangan antara presisi dan recall, sangat berguna ketika kita ingin mempertimbangkan kedua aspek tersebut secara bersamaan.
+
+ Rumus: 
+
+ ![image](https://github.com/user-attachments/assets/26b05c35-d4db-4435-a0b6-ff3e412aecef)
+
+ Maka: Jika F-Score@10=0.588, ini mencerminkan keseimbangan antara presisi dan recall. Nilai ini memberikan metrik tunggal untuk mengevaluasi kinerja sistem rekomendasi, di mana nilai yang lebih tinggi menunjukkan kinerja yang lebih baik secara keseluruhan dalam menyeimbangkan kualitas dan kelengkapan rekomendasi.
+
+####Pengujian Sistem Rekomendasi
+
+ Sistem diuji dengan memasukkan satu lagu sebagai input dan mengamati 10 lagu teratas yang direkomendasikan berdasarkan kemiripan konten.
+
+#### Contoh Pengujian:
+
+- Lagu input: Someone Like You
+
+- Top 10 rekomendasi:
+
+| No | Judul Lagu                        | Skor Kemiripan |
+|----|-----------------------------------|----------------|
+| 1  | Never Be Like You                | 0.9615         |
+| 2  | The One I Like                   | 0.9184         |
+| 3  | Like Someone In Love            | 0.9112         |
+| 4  | But I Like It                   | 0.9110         |
+| 5  | Like You                        | 0.9078         |
+| 6  | LIKE I WANT YOU                 | 0.8896         |
+| 7  | You're The One That I Like      | 0.8894         |
+| 8  | I Like That                     | 0.8812         |
+| 9  | like that                       | 0.8804         |
+| 10 | Nothing Like You                | 0.8758         |
+
+#### Analisis Hasil:
+
+Berdasarkan hasil pengujian di atas, sistem rekomendasi menunjukkan performa yang cukup baik dalam menemukan lagu-lagu yang secara semantik atau kontekstual mirip. Misalnya, untuk lagu "Someone Like You", mayoritas rekomendasi memiliki frasa "Like You" atau "Like" di dalamnya, serta beberapa rekomendasi yang secara tematik mirip seperti "The One I Like" atau "Nothing Like You". Hal ini menunjukkan bahwa penggunaan TF-IDF pada track_name dikombinasikan dengan Cosine Similarity efektif dalam menangkap kemiripan berbasis judul.
+
+#### Evaluasi terhadap Business Understanding
+
+Sistem rekomendasi yang dikembangkan telah diuji dengan memberikan input lagu dan menghasilkan 10 rekomendasi teratas berbasis kesamaan konten. Berdasarkan hasil evaluasi, sistem ini telah mampu menjawab tujuan dan permasalahan yang dirumuskan sebelumnya:
+
+- Menjawab Problem Statement 1 – Efisiensi Pencarian Lagu:
+Sistem berhasil merekomendasikan lagu-lagu yang mirip berdasarkan fitur judul dan konten numerik, sehingga pengguna tidak perlu lagi mencari lagu secara manual dari ribuan pilihan yang tersedia. Ini membuat proses menemukan lagu menjadi lebih cepat dan efisien.
+
+- Menjawab Problem Statement 2 – Rekomendasi Tanpa Riwayat Pengguna:
+Karena sistem ini menggunakan pendekatan content-based filtering dan tidak bergantung pada histori pemutaran pengguna, sistem tetap dapat memberikan rekomendasi meskipun tidak ada interaksi pengguna sebelumnya (mengatasi masalah cold start).
+
+- Menjawab Goals Proyek:
+Sistem memberikan pengalaman personalisasi dengan merekomendasikan lagu yang mirip berdasarkan konten, khususnya dari sisi judul lagu. Hal ini sejalan dengan tujuan proyek untuk membangun sistem berbasis konten yang relevan.
+
+- Menjawab Solution Statements:
+Sistem telah mengimplementasikan metode TF-IDF pada judul lagu dan menghitung kemiripan menggunakan cosine similarity. Hasil rekomendasi menunjukkan bahwa pendekatan ini cukup efektif, meskipun masih bisa ditingkatkan dengan menambahkan fitur audio lainnya atau menggabungkan dengan metode lain seperti collaborative filtering jika data tersedia.
+
+
+#### Kesimpulan
+
+Proyek ini berhasil membangun sistem rekomendasi lagu berbasis Content-Based Filtering menggunakan kombinasi TF-IDF pada judul lagu dan Cosine Similarity. Hasil pengujian menunjukkan bahwa sistem mampu memberikan rekomendasi yang relevan, khususnya untuk lagu-lagu yang belum pernah diputar sebelumnya (cold start).
+
+Meskipun sistem menunjukkan presisi dan recall yang cukup baik, terdapat ruang untuk peningkatan dari sisi keberagaman rekomendasi. Penggunaan fitur tambahan seperti lirik lagu, genre, atau metadata audio lainnya dapat membantu meningkatkan variasi dan akurasi hasil rekomendasi.
+
+Sistem ini dapat menjadi solusi awal yang efektif untuk memandu pengguna menemukan lagu yang sesuai dengan preferensi mereka, serta menjadi fondasi untuk pengembangan sistem rekomendasi hybrid di masa mendatang yang menggabungkan konten dan histori pengguna.
